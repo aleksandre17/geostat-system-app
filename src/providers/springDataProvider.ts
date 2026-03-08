@@ -2,7 +2,7 @@ import { DataProvider } from "react-admin";
 //import { fetchUtils } from "react-admin";
 import { httpClient } from "./httpClient";
 
-const apiUrl = import.meta.env.VITE_API_URL;
+const apiUrl = "http://localhost:8081/api";
 //const httpClient = fetchUtils.fetchJson;
 
 export const springDataProvider: DataProvider = {

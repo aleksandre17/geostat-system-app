@@ -128,20 +128,20 @@ const AdminWithSettings = () => {
         edit={UserEdit}
         recordRepresentation="username"
       />
-      <Resource
-        name="roles"
-        list={RoleList}
-        create={RoleCreate}
-        edit={RoleEdit}
-        recordRepresentation="name"
-      />
-      <Resource
-        name="permissions"
-        list={PermissionList}
-        create={PermissionCreate}
-        edit={PermissionEdit}
-        recordRepresentation="name"
-      />
+      {/*<Resource*/}
+      {/*  name="roles"*/}
+      {/*  list={RoleList}*/}
+      {/*  create={RoleCreate}*/}
+      {/*  edit={RoleEdit}*/}
+      {/*  recordRepresentation="name"*/}
+      {/*/>*/}
+      {/*<Resource*/}
+      {/*  name="permissions"*/}
+      {/*  list={PermissionList}*/}
+      {/*  create={PermissionCreate}*/}
+      {/*  edit={PermissionEdit}*/}
+      {/*  recordRepresentation="name"*/}
+      {/*/>*/}
       <Resource
         name="pages"
         list={PageList}

@@ -1,8 +1,8 @@
 import {
   DashboardMenuItem,
   MenuItemLink,
-  MenuProps,
-  useSidebarState,
+  MenuProps, useGetIdentity,
+  useSidebarState
 } from "react-admin";
 import { Box } from "@mui/material";
 import clsx from "clsx";
@@ -17,6 +17,9 @@ import RenderMenuItem from "./RenderMenuItem.tsx";
 const Menu = ({ dense = false }: MenuProps) => {
   const [open] = useSidebarState();
   const { settings } = useSettings();
+
+  const { identity } = useGetIdentity();
+  const currentUserId = identity?.id;
 
   return (
     <Box
@@ -42,18 +45,34 @@ const Menu = ({ dense = false }: MenuProps) => {
       })}
     >
       <DashboardMenuItem />
-      <MenuItemLink
-        to="/users"
-        primaryText="Users"
-        leftIcon={<PeopleIcon />} //sx={{ color: "#333", "&:hover": { backgroundColor: "#e0e0e0" } }}
-      />
-      <MenuItemLink to="/roles" primaryText="Roles" leftIcon={<GroupIcon />} />
-      <MenuItemLink
-        to="/permissions"
-        primaryText="Permissions"
-        leftIcon={<LockIcon />}
-      />
-      <MenuItemLink to="/pages" primaryText="Pages" leftIcon={<PagesIcon />} />
+
+      {currentUserId == "admin" && (
+        <>
+          <MenuItemLink
+            to="/users"
+            primaryText="Users"
+            leftIcon={<PeopleIcon />}
+          />
+          <MenuItemLink
+            to="/pages"
+            primaryText="Pages"
+            leftIcon={<PagesIcon />}
+          />
+        </>
+      )}
+
+      {/*<MenuItemLink*/}
+      {/*  to="/users"*/}
+      {/*  primaryText="Users"*/}
+      {/*  leftIcon={<PeopleIcon />} //sx={{ color: "#333", "&:hover": { backgroundColor: "#e0e0e0" } }}*/}
+      {/*/>*/}
+      {/*<MenuItemLink to="/roles" primaryText="Roles" leftIcon={<GroupIcon />} />*/}
+      {/*<MenuItemLink*/}
+      {/*  to="/permissions"*/}
+      {/*  primaryText="Permissions"*/}
+      {/*  leftIcon={<LockIcon />}*/}
+      {/*/>*/}
+      {/*<MenuItemLink to="/pages" primaryText="Pages" leftIcon={<PagesIcon />} />*/}
       {settings?.map((item) => (
         <RenderMenuItem dense={dense} key={item.slug} item={item} />
       ))}

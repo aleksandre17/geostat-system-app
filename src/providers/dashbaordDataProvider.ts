@@ -2,7 +2,7 @@ import { DataProvider } from "react-admin";
 import { springDataProvider } from "./springDataProvider";
 import { httpClient } from "./httpClient";
 
-const apiUrl = import.meta.env.VITE_API_URL;
+const apiUrl = "http://localhost:8081/api";
 
 function addQueryParams(url: string, params: Record<string, any>) {
   const queryParams = new URLSearchParams();

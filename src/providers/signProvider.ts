@@ -1,7 +1,7 @@
 import { AuthProvider } from "react-admin";
 import { jwtDecode } from "jwt-decode";
 
-const apiUrl = import.meta.env.VITE_API_SIGN_URL;
+const apiUrl = "http://localhost:8081/sign";
 
 export const signProvider: AuthProvider = {
   login: async ({ username, password }) => {

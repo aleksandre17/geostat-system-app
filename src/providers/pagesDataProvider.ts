@@ -1,7 +1,7 @@
 import { DataProvider } from "react-admin";
 import { httpClient } from "./httpClient";
 
-const apiUrl = import.meta.env.VITE_API_URL;
+const apiUrl = "http://localhost:8081/api";
 
 export const pagesDataProvider: DataProvider = {
   getList: async (resource, params) => {

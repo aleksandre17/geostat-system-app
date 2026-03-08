@@ -56,6 +56,12 @@ const PageFormContent = () => {
         </>
       )}
 
+      {record && record.parentId === null && (
+        <ReferenceInput source="userId" reference="users">
+          <SelectInput optionText="username" label="Select User" />
+        </ReferenceInput>
+      )}
+
       {record && (
         <ReferenceInput
           source="parentId"
@@ -92,6 +98,7 @@ const PageEdit = (props: EditProps) => {
       return {
         ...baseData,
         description: data.description,
+        userId: data.userId,
         // გავასუფთაოთ PAGE-ის ველები
         resource: null,
         metaDatabaseType: null,
@@ -116,6 +123,7 @@ const PageEdit = (props: EditProps) => {
         metaDatabaseName: data.metaDatabaseName,
         // გავასუფთაოთ DIRECTORY-ის ველები
         description: null,
+        userId: null,
       };
     }
   };

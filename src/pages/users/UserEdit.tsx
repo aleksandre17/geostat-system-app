@@ -15,9 +15,9 @@ const UserEdit = (props: JSX.IntrinsicAttributes & EditProps<never, Error>) => (
       <TextInput source="username" />
       <TextInput source="email" />
       <TextInput source="password" type="password" />
-      <ReferenceArrayInput source="roles" reference="roles">
-        <SelectArrayInput optionText="name" />
-      </ReferenceArrayInput>
+      {/*<ReferenceArrayInput source="roles" reference="roles">*/}
+      {/*  <SelectArrayInput optionText="name" />*/}
+      {/*</ReferenceArrayInput>*/}
     </SimpleForm>
   </Edit>
 );

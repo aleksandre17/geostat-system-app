@@ -3,7 +3,7 @@ import { springDataProvider } from "./springDataProvider";
 import { httpClient } from "./httpClient";
 import { MenuItems } from "../types/treeCategories";
 
-const apiUrl = import.meta.env.VITE_API_URL;
+const apiUrl = "http://localhost:8081/api";
 
 export interface SettingsDataProvider extends DataProvider {
   getTreeCategories: <T = MenuItems>(resource: string) => Promise<{ data: T }>;

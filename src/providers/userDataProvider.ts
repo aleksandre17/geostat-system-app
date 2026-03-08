@@ -1,7 +1,7 @@
 import { DataProvider } from "react-admin";
 import { httpClient } from "./httpClient";
 
-const apiUrl = import.meta.env.VITE_API_URL;
+const apiUrl = "http://localhost:8081/api";
 
 export const userDataProvider: DataProvider = {
   getList: async (resource, params) => {
@@ -99,6 +99,7 @@ export const userDataProvider: DataProvider = {
     const { json } = await httpClient(url, {
       method: "POST",
       body,
+      headers: { "Content-Type": "application/json" }
     });
     return { data: json };
   },
@@ -123,6 +124,7 @@ export const userDataProvider: DataProvider = {
     const { json } = await httpClient(url, {
       method: "PUT",
       body,
+      headers: { "Content-Type": "application/json" }
     });
     return { data: json };
   },
@@ -145,7 +147,7 @@ export const userDataProvider: DataProvider = {
             }))
           : [],
       });
-      const { json } = await httpClient(url, { method: "PUT", body });
+      const { json } = await httpClient(url, { method: "PUT", body,  headers: { "Content-Type": "application/json" } });
       return json;
     });
     const results = await Promise.all(promises);
@@ -154,14 +156,14 @@ export const userDataProvider: DataProvider = {
 
   delete: async (resource, params) => {
     const url = `${apiUrl}/v1/${resource}/${params.id}`;
-    await httpClient(url, { method: "DELETE" });
+    await httpClient(url, { method: "DELETE",  headers: { "Content-Type": "application/json" } });
     return { data: params.previousData! };
   },
 
   deleteMany: async (resource, params) => {
     const promises = params.ids.map(async (id) => {
       const url = `${apiUrl}/v1/${resource}/${id}`;
-      await httpClient(url, { method: "DELETE" });
+      await httpClient(url, { method: "DELETE",  headers: { "Content-Type": "application/json" } });
       return id;
     });
     const results = await Promise.all(promises);
