@@ -2,12 +2,10 @@ import React from "react";
 import { Card, CardContent, Typography } from "@mui/material";
 import Grid from "@mui/material/Grid";
 
-import {
-  People as PeopleIcon,
-  TrendingUp as TrendingUpIcon,
-  ShoppingCart as ShoppingCartIcon,
-  PersonAdd as PersonAddIcon,
-} from "@mui/icons-material";
+import PeopleIcon from "@mui/icons-material/People";
+import TrendingUpIcon from "@mui/icons-material/TrendingUp";
+import ShoppingCartIcon from "@mui/icons-material/ShoppingCart";
+import PersonAddIcon from "@mui/icons-material/PersonAdd";
 
 interface StatsCardsProps {
   stats: {

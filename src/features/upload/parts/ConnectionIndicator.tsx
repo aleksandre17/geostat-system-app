@@ -1,9 +1,7 @@
 import React from "react";
 import { Chip } from "@mui/material";
-import {
-  Circle as CircleIcon,
-  Refresh as ReconnectIcon,
-} from "@mui/icons-material";
+import CircleIcon from "@mui/icons-material/Circle";
+import ReconnectIcon from "@mui/icons-material/Refresh";
 import type { ConnectionState } from "../../../services/WebSocketService";
 
 interface ConnectionIndicatorProps {

@@ -225,7 +225,11 @@ export const GroupedRolesInput = ({ source }: { source: string }) => {
   const { field } = useInput({ source });
   const { data: allRoles = [] } = useGetList<RoleRecord>("roles", LOOKUP_QUERY);
 
-  const selected: number[] = Array.isArray(field.value) ? field.value : [];
+  const selected: number[] = Array.isArray(field.value)
+    ? field.value.map((v: number | { id: number }) =>
+        typeof v === "object" && v !== null ? v.id : v,
+      )
+    : [];
 
   const onToggle = (id: number) => {
     field.onChange(
@@ -252,7 +256,9 @@ export const GroupedRolesInput = ({ source }: { source: string }) => {
   );
 
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", gap: 2, width: "100%" }}>
+    <Box
+      sx={{ display: "flex", flexDirection: "column", gap: 2, width: "100%" }}
+    >
       {groups.system.length > 0 && (
         <GroupSection
           groupKey="system"

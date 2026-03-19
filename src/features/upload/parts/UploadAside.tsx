@@ -12,7 +12,9 @@ import {
   ListItem,
   ListItemText,
 } from "@mui/material";
-import { Storage as AccessIcon, Download, Info } from "@mui/icons-material";
+import AccessIcon from "@mui/icons-material/Storage";
+import Download from "@mui/icons-material/Download";
+import Info from "@mui/icons-material/Info";
 import { httpClient } from "../../../api/httpClient";
 import { ENV } from "../../../config/env";
 

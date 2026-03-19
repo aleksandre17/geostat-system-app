@@ -1,0 +1,19 @@
+# Dev — auto-loaded with `docker compose up`
+services:
+  geostat-system-app:
+    build:
+      target: development
+    ports:
+      - "5175:5175"
+    volumes:
+      - .:/app
+      - /app/node_modules   # node_modules container-ში რჩება
+    environment:
+      - VITE_API_URL=${VITE_API_URL}
+    develop:
+      watch:
+        - action: sync
+          path: ./src
+          target: /app/src
+        - action: rebuild
+          path: package.json

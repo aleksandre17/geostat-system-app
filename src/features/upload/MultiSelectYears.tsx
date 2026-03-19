@@ -1,7 +1,7 @@
 import React from "react";
 import { Select, MenuItem, FormControl, InputLabel } from "@mui/material";
 
-const YEAR_CHOICES = ["2020", "2021", "2022", "2023", "2024", "2025"];
+const YEAR_CHOICES = ["2020", "2021", "2022", "2023", "2024", "2025", "2026"];
 
 interface MultiSelectYearsProps {
   onChange: (years: string[]) => void;
@@ -12,7 +12,6 @@ export const MultiSelectYears: React.FC<MultiSelectYearsProps> = ({
   onChange,
   value,
 }) => {
-
   return (
     <FormControl fullWidth required>
       <InputLabel>Years</InputLabel>

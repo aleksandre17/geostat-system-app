@@ -1,3 +1,8 @@
+# Environment variables
+.env
+.env.*
+!.env.example
+
 # Logs
 logs
 *.log
@@ -13,7 +18,7 @@ dist-ssr
 *.local
 
 # Backend scripts
-scripts/
+scripts/backend/
 
 # Editor directories and files
 .vscode/*

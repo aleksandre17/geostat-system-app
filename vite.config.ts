@@ -2,7 +2,6 @@ import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import { nodePolyfills } from "vite-plugin-node-polyfills";
 import path from "path";
-import * as fs from "node:fs";
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
@@ -10,9 +9,9 @@ export default defineConfig(({ mode }) => ({
     react(),
 
     nodePolyfills({
-      globals: {
-        global: true,
-      },
+      // Only polyfill what's actually needed (xlsx needs Buffer)
+      include: ["buffer"],
+      globals: { global: true, Buffer: true },
     }),
   ],
   optimizeDeps: {
@@ -41,15 +40,45 @@ export default defineConfig(({ mode }) => ({
     },
   },
   build: {
+    target: "esnext",
     commonjsOptions: {
       transformMixedEsModules: true,
     },
     sourcemap: mode === "development",
-    //
     rollupOptions: {
-      external: [],
+      output: {
+        // Mirror src/ folder structure in dist/assets/
+        chunkFileNames(chunkInfo) {
+          if (chunkInfo.name.startsWith("vendor-")) {
+            return "assets/vendor/[name]-[hash].js";
+          }
+          const id = chunkInfo.facadeModuleId;
+          if (id) {
+            const srcIdx = id.indexOf("/src/");
+            if (srcIdx !== -1) {
+              const rel = id.slice(srcIdx + 5); // strip leading /src/
+              const dir = rel.includes("/")
+                ? rel.slice(0, rel.lastIndexOf("/"))
+                : "";
+              return dir
+                ? `assets/${dir}/[name]-[hash].js`
+                : "assets/[name]-[hash].js";
+            }
+          }
+          return "assets/[name]-[hash].js";
+        },
+        manualChunks(id) {
+          if (!id.includes("node_modules")) return;
+          // Truly React-independent — safe to split
+          if (id.includes("/xlsx/")) return "vendor-xlsx";
+          if (id.includes("@stomp/") || id.includes("sockjs-client"))
+            return "vendor-ws";
+          // Everything else (React + all dependents) → one cacheable chunk
+          // Splitting React-dependent libs causes init-order errors in the browser
+          return "vendor-app";
+        },
+      },
     },
-    //
   },
-  base: "./",
+  base: "/",
 }));

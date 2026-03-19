@@ -13,7 +13,9 @@ import {
   LinearProgress,
   Button,
 } from "@mui/material";
-import { ArrowBack, Upload, Cancel } from "@mui/icons-material";
+import ArrowBack from "@mui/icons-material/ArrowBack";
+import Upload from "@mui/icons-material/Upload";
+import Cancel from "@mui/icons-material/Cancel";
 import { AccessUploadButton } from "./AccessUploadButton";
 import { MultiSelectYears } from "./MultiSelectYears";
 import { useUpload } from "./hooks/useUpload";
