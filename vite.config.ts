@@ -4,8 +4,6 @@ import { nodePolyfills } from "vite-plugin-node-polyfills";
 import path from "path";
 import * as fs from "node:fs";
 
-
-
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
   plugins: [
@@ -18,15 +16,28 @@ export default defineConfig(({ mode }) => ({
     }),
   ],
   optimizeDeps: {
-    include: ['react-is', "prop-types", 'hoist-non-react-statics'],
+    include: [
+      "react-is",
+      "prop-types",
+      "hoist-non-react-statics",
+      "@emotion/react",
+      "@emotion/styled",
+      "@emotion/cache",
+    ],
   },
   server: {
     host: true,
     historyApiFallback: true,
   },
   resolve: {
+    // Force single instances — prevents "loaded multiple times" warnings
+    // from libraries (e.g. react-sortable-tree) that bundle their own copies
+    dedupe: ["react", "react-dom", "@emotion/react", "@emotion/styled"],
     alias: {
-      '@mui-icons': path.resolve(__dirname, 'node_modules/@mui/icons-material/esm'),
+      "@mui-icons": path.resolve(
+        __dirname,
+        "node_modules/@mui/icons-material/esm",
+      ),
     },
   },
   build: {

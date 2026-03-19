@@ -1,177 +1,78 @@
 import { DataProvider } from "react-admin";
-import { httpClient } from "./httpClient";
+import { httpClient } from "../api";
+import { ENV } from "../config";
+import { createDataProvider } from "./createDataProvider";
+import { createTransform } from "./utils/createTransform";
 
-const apiUrl = "http://localhost:8081/api";
+const apiUrl = ENV.API_URL;
 
-export const pagesDataProvider: DataProvider = {
-  getList: async (resource, params) => {
-    const { page, perPage } = params.pagination || { page: 1, perPage: 1000 };
-    const { field, order } = params.sort || {
-      field: "orderIndex",
-      order: "ASC",
-    };
-    const query = new URLSearchParams({
-      _page: page.toString(),
-      _limit: perPage.toString(),
-      _sort: field,
-      _order: order,
-      ...params.filter,
-    }).toString();
-    const url = `${apiUrl}/v1/${resource}?${query}`;
-    const { json } = await httpClient(url, { method: "GET",headers: {
-        "content-Type": 'application/json',
-      }  });
-    return {
-      data: json,
-      total: json.length, // Note: Backend should return total count for proper pagination
-    };
+// ── Transforms ───────────────────────────────────────────────────────────────
+// Access fields (role, userId, …) are handled globally in createDataProvider.
+// Only the page-specific hierarchy field needs mapping here.
+
+const pageTransform = createTransform({ parent: "parentId" });
+
+// ── Custom method types ───────────────────────────────────────────────────────
+
+interface PageReorder {
+  pageId: number;
+  parentId: number | null;
+  orderIndex: number;
+}
+
+interface ReorderParams {
+  reorders: PageReorder[];
+}
+
+export interface PagesDataProvider extends DataProvider {
+  reorderPage: (
+    resource: string,
+    params: ReorderParams,
+  ) => Promise<{ data: number[] }>;
+  reorderPages: (
+    resource: string,
+    params: ReorderParams,
+  ) => Promise<{ data: number[] }>;
+}
+
+// ── Provider ─────────────────────────────────────────────────────────────────
+
+const base = createDataProvider({
+  version: "v1",
+  defaultPagination: { page: 1, perPage: 1000 },
+  defaultSort: { field: "orderIndex", order: "ASC" },
+  resources: {
+    pages: pageTransform,
   },
+});
 
-  getOne: async (resource, params) => {
-    const url = `${apiUrl}/v1/${resource}/${params.id}`;
-    const { json } = await httpClient(url, {
-      method: "GET",
-      headers: {
-        "content-Type": 'application/json',
-      }
-    });
-    return {
-      data: {
-        ...json,
-        parent: json.parent ? json.parent.id : null,
-      },
-    };
-  },
+export const pagesDataProvider: PagesDataProvider = {
+  ...base,
 
-  getMany: async (resource, params) => {
-    const query = new URLSearchParams({
-      id: params.ids.join(","),
-    }).toString();
-    const url = `${apiUrl}/v1/${resource}?${query}`;
-    const { json } = await httpClient(url, { method: "GET", headers: {
-        "content-Type": 'application/json',
-      }  });
-    return { data: json };
-  },
-
-  getManyReference: async (resource, params) => {
-    const { page, perPage } = params.pagination || { page: 1, perPage: 1000 };
-    const { field, order } = params.sort || {
-      field: "orderIndex",
-      order: "ASC",
-    };
-    const query = new URLSearchParams({
-      _page: page.toString(),
-      _limit: perPage.toString(),
-      _sort: field,
-      _order: order,
-      [params.target]: params.id,
-      ...params.filter,
-    }).toString();
-    const url = `${apiUrl}/v1/${resource}?${query}`;
-    const { json } = await httpClient(url, { method: "GET", headers: {
-        "content-Type": 'application/json',
-      }  });
-    return {
-      data: json,
-      total: json.length, // Adjust if backend provides total
-    };
-  },
-
-  create: async (resource, params) => {
-    const url = `${apiUrl}/v1/${resource}`;
-    const body = JSON.stringify({
-      ...params.data,
-      parent: params.data.parent ? { id: params.data.parent } : null,
-    });
-    const { json } = await httpClient(url, {
-      method: "POST",
-      body,
-      headers: {
-        "content-Type": 'application/json',
-      }
-    });
-    return { data: json };
-  },
-
-  update: async (resource, params) => {
-    const url = `${apiUrl}/v1/${resource}/${params.id}`;
-    const body = JSON.stringify({
-      ...params.data,
-      parent: params.data.parent ? { id: params.data.parent } : null,
-    });
-    const { json } = await httpClient(url, {
-      method: "PUT",
-      body,
-      headers: {
-        "content-Type": 'application/json',
-      }
-    });
-    return { data: json };
-  },
-
-  updateMany: async (resource, params) => {
-    const promises = params.ids.map(async (id) => {
-      const url = `${apiUrl}/v1/${resource}/${id}`;
-      const body = JSON.stringify({
-        ...params.data,
-        parent: params.data.parent ? { id: params.data.parent } : null,
-      });
-      const { json } = await httpClient(url, { method: "PUT", body, headers: {
-          "content-Type": 'application/json',
-        }  });
-      return json;
-    });
-    const results = await Promise.all(promises);
-    return { data: results.map((item) => item.id) };
-  },
-
-  delete: async (resource, params) => {
-    const url = `${apiUrl}/v1/${resource}/${params.id}`;
-    await httpClient(url, { method: "DELETE", headers: {
-        "content-Type": 'application/json',
-      }  });
-    return { data: params.previousData! };
-  },
-
-  deleteMany: async (resource, params) => {
-    const promises = params.ids.map(async (id) => {
-      const url = `${apiUrl}/v1/${resource}/${id}`;
-      await httpClient(url, { method: "DELETE", headers: {
-          "content-Type": 'application/json',
-        }  });
-      return id;
-    });
-    const results = await Promise.all(promises);
+  // Sequential reorder (one request per item — legacy)
+  reorderPage: async (_resource, params) => {
+    const results = await Promise.all(
+      params.reorders.map(async (reorder) => {
+        await httpClient(`${apiUrl}/v1/pages/reorder`, {
+          method: "POST",
+          body: {
+            pageId: reorder.pageId,
+            parentId: reorder.parentId,
+            orderIndex: reorder.orderIndex,
+          },
+        });
+        return reorder.pageId;
+      }),
+    );
     return { data: results };
   },
 
-  reorderPage: async (resource, params) => {
-    const url = `${apiUrl}/pages/reorder`;
-    const promises = params.reorders.map(async (reorder) => {
-      const body = JSON.stringify({
-        pageId: reorder.pageId,
-        parentId: reorder.parentId,
-        orderIndex: reorder.orderIndex,
-      });
-      await httpClient(url, { method: "POST", body, headers: {
-          "content-Type": 'application/json',
-        }  });
-      return reorder.pageId;
-    });
-    const results = await Promise.all(promises);
-    return { data: results };
-  },
-  reorderPages: async (resource, params) => {
-    const url = `${apiUrl}/v1/pages/reorders`;
-    const body = JSON.stringify(params.reorders);
-    await httpClient(url, {
+  // Batch reorder (single request for all items)
+  reorderPages: async (_resource, params) => {
+    await httpClient(`${apiUrl}/v1/pages/reorders`, {
       method: "POST",
-      body,
-      headers: {
-        "content-Type": 'application/json',
-      }
+      body: params.reorders,
     });
-    return { data: params.reorders.map((reorder) => reorder.pageId) };
+    return { data: params.reorders.map((r) => r.pageId) };
   },
 };

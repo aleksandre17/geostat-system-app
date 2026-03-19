@@ -1,90 +1,82 @@
+import { lazy, Suspense, useMemo } from "react";
 import { Admin, CustomRoutes, Resource, useStore } from "react-admin";
-import { signProvider } from "./providers/signProvider.ts";
+import { signProvider } from "./auth";
 import dataProviderFactory from "./providers";
-import {
-  SettingsProvider,
-  useSettings,
-} from "./context/SettingsContext";
-import { Layout } from "./Layout/Layout.tsx";
-import Login from "./Layout/Login";
-import { BrowserRouter, Route } from "react-router-dom"; // Use react-router-dom
-import { createBrowserHistory } from "history"; // Import history
-import UserList from "./pages/users/UserList";
-import UserCreate from "./pages/users/UserCreate";
-import UserEdit from "./pages/users/UserEdit";
-import RoleList from "./pages/roles/RoleList";
-import RoleCreate from "./pages/roles/RoleCreate";
-import RoleEdit from "./pages/roles/RoleEdit";
-import PermissionList from "./pages/permissions/PermissionList";
-import PermissionCreate from "./pages/permissions/PermissionCreate";
-import PermissionEdit from "./pages/permissions/PermissionEdit";
-import PageList from "./pages/pages/PageList.tsx";
-import PageCreate from "./pages/pages/PageCreate.tsx";
-import PageEdit from "./pages/pages/PageEdit.tsx";
-import { Dashboard, AccessUploadPage } from "./pages";
-import { useMemo } from "react";
-import { themes, ThemeName } from "./themes/themes";
+import { SettingsProvider, useSettings } from "./context/SettingsContext";
+import { AppLayout } from "./layout";
+import Login from "./layout/Login";
+import { BrowserRouter, Route } from "react-router-dom";
 import { Alert } from "@mui/material";
+import { getLeafPaths } from "./features/cms/leafPaths";
+import type { PageItem } from "./features/cms/leafPaths";
+import { themes, ThemeName } from "./themes/themes";
 import { settingsDataProvider } from "./providers/settingsDataProvider.ts";
+import { queryClient } from "./api";
 
-type Item = {
-  slug: string;
-  nodeType: string;
-  children?: Item[];
-  // Add other properties as needed
-};
+import PeopleIcon from "@mui/icons-material/People";
+import GroupIcon from "@mui/icons-material/Group";
+import LockIcon from "@mui/icons-material/Lock";
+import PagesIcon from "@mui/icons-material/Pages";
 
-type LeafPath = {
-  path: string;
-  item: Item;
-};
+// ── Data provider — created once at module level, never recreated ─────────────
+const dataProvider = dataProviderFactory();
 
-function getLeafPaths(items: Item[], path: string[] = []): LeafPath[] {
-  let result: LeafPath[] = [];
-  for (const item of items) {
-    const currentPath = [...path, item.slug];
-    if (item.nodeType !== "DIRECTORY") {
-      result.push({ path: currentPath.join("/"), item });
-    } else if (item.children) {
-      result = result.concat(getLeafPaths(item.children, currentPath));
-    }
-  }
-  return result;
-}
+// ── Lazy page chunks ──────────────────────────────────────────────────────────
+const UserList = lazy(() => import("./features/users/UserList"));
+const UserCreate = lazy(() => import("./features/users/UserCreate"));
+const UserEdit = lazy(() => import("./features/users/UserEdit"));
 
-// Create a history instance
-const history = createBrowserHistory();
+const RoleList = lazy(() => import("./features/roles/RoleList"));
+const RoleCreate = lazy(() => import("./features/roles/RoleCreate"));
+const RoleEdit = lazy(() => import("./features/roles/RoleEdit"));
+
+const PermissionList = lazy(
+  () => import("./features/permissions/PermissionList"),
+);
+const PermissionCreate = lazy(
+  () => import("./features/permissions/PermissionCreate"),
+);
+const PermissionEdit = lazy(
+  () => import("./features/permissions/PermissionEdit"),
+);
+
+const PageList = lazy(() => import("./features/cms/PageList"));
+const PageCreate = lazy(() => import("./features/cms/PageCreate"));
+const PageEdit = lazy(() => import("./features/cms/PageEdit"));
+
+const Dashboard = lazy(() =>
+  import("./features/dashboard/Dashboard").then((m) => ({
+    default: m.Dashboard,
+  })),
+);
+const AccessUploadPage = lazy(() =>
+  import("./features/upload/AccessUploadPage").then((m) => ({
+    default: m.AccessUploadPage,
+  })),
+);
+const ProfilePage = lazy(() =>
+  import("./features/profile/ProfilePage").then((m) => ({
+    default: m.ProfilePage,
+  })),
+);
+
+// ─────────────────────────────────────────────────────────────────────────────
+
+export type { PageItem };
 
 const AdminWithSettings = () => {
   const [themeName] = useStore<ThemeName>("themeName", "default");
-  const singleTheme = themes.find((theme) => theme.name === themeName)?.single;
-  const lightTheme = themes.find((theme) => theme.name === themeName)?.light;
-  const darkTheme = themes.find((theme) => theme.name === themeName)?.dark;
+  const singleTheme = themes.find((t) => t.name === themeName)?.single;
+  const lightTheme = themes.find((t) => t.name === themeName)?.light;
+  const darkTheme = themes.find((t) => t.name === themeName)?.dark;
 
-  // const hasRequested = useRef(false);
   const { settings, error, reloadSettings } = useSettings();
 
-  // useEffect(() => {
-  //   if (hasRequested.current) return;
-  //   hasRequested.current = true;
-  //   (async () => {
-  //     const response = await httpClient(
-  //       `${import.meta.env.VITE_API_URL}/v1/pages/roots`,
-  //       {
-  //         method: "GET",
-  //         headers: {
-  //           "Content-Type": "application/json",
-  //         },
-  //       },
-  //     );
-  //     // Assuming setSettings is available via useSettings
-  //     const { updateSettings } = useSettings();
-  //     await updateSettings({ data: response.json });
-  //   })();
-  // }, []);
-
   const leafPaths = useMemo(
-    () => (Array.isArray(settings) ? getLeafPaths(settings) : []),
+    () =>
+      Array.isArray(settings)
+        ? getLeafPaths(settings as unknown as PageItem[])
+        : [],
     [settings],
   );
 
@@ -99,78 +91,95 @@ const AdminWithSettings = () => {
     );
   }
 
-  if (!settings) {
-    return <></>;
-  }
-
-  console.log("settings leafPaths", settings);
-  console.log("leafPaths", leafPaths);
-
   return (
     <Admin
       loginPage={Login}
       dashboard={Dashboard}
-      dataProvider={dataProviderFactory()}
+      dataProvider={dataProvider}
       authProvider={signProvider}
-      layout={Layout}
+      layout={AppLayout}
+      queryClient={queryClient}
       disableTelemetry
       requireAuth
       theme={singleTheme}
       lightTheme={lightTheme}
       darkTheme={darkTheme}
       defaultTheme="dark"
-      history={history}
     >
+      {/* User management */}
       <Resource
         name="users"
         list={UserList}
         create={UserCreate}
         edit={UserEdit}
         recordRepresentation="username"
+        icon={PeopleIcon}
       />
-      {/*<Resource*/}
-      {/*  name="roles"*/}
-      {/*  list={RoleList}*/}
-      {/*  create={RoleCreate}*/}
-      {/*  edit={RoleEdit}*/}
-      {/*  recordRepresentation="name"*/}
-      {/*/>*/}
-      {/*<Resource*/}
-      {/*  name="permissions"*/}
-      {/*  list={PermissionList}*/}
-      {/*  create={PermissionCreate}*/}
-      {/*  edit={PermissionEdit}*/}
-      {/*  recordRepresentation="name"*/}
-      {/*/>*/}
+
+      {/* Role management */}
+      <Resource
+        name="roles"
+        list={RoleList}
+        create={RoleCreate}
+        edit={RoleEdit}
+        recordRepresentation="name"
+        icon={GroupIcon}
+      />
+
+      {/* Permission management */}
+      <Resource
+        name="permissions"
+        list={PermissionList}
+        create={PermissionCreate}
+        edit={PermissionEdit}
+        recordRepresentation="name"
+        icon={LockIcon}
+      />
+
+      {/* Page / menu management */}
       <Resource
         name="pages"
         list={PageList}
         create={PageCreate}
         edit={PageEdit}
         recordRepresentation="name"
+        icon={PagesIcon}
       />
+
+      {/* Static custom routes */}
       <CustomRoutes>
-        {leafPaths.map(({ path, item }) => {
-          console.log(`Creating route for path: ${path}`, item);
-          return (
-            <Route
-              key={path}
-              path={path}
-              element={<AccessUploadPage key={path} path={path} item={item} />}
-            />
-          )
-        })}
+        <Route
+          path="/profile"
+          element={
+            <Suspense fallback={null}>
+              <ProfilePage />
+            </Suspense>
+          }
+        />
+      </CustomRoutes>
+
+      {/* Dynamic data routes generated from the settings tree */}
+      <CustomRoutes>
+        {leafPaths.map(({ path, item }) => (
+          <Route
+            key={item.id}
+            path={path}
+            element={
+              <Suspense fallback={null}>
+                <AccessUploadPage path={path} item={item} />
+              </Suspense>
+            }
+          />
+        ))}
       </CustomRoutes>
     </Admin>
   );
 };
 
-export const App = () => {
-  return (
-    <SettingsProvider dataProvider={settingsDataProvider}>
-      <BrowserRouter>
-        <AdminWithSettings />
-      </BrowserRouter>
-    </SettingsProvider>
-  );
-};
+export const App = () => (
+  <SettingsProvider dataProvider={settingsDataProvider}>
+    <BrowserRouter>
+      <AdminWithSettings />
+    </BrowserRouter>
+  </SettingsProvider>
+);

@@ -1,9 +1,10 @@
 import { DataProvider } from "react-admin";
 import { springDataProvider } from "./springDataProvider";
-import { httpClient } from "./httpClient";
-import { MenuItems } from "../types/treeCategories";
+import { httpClient } from "../api";
+import { MenuItems } from "../types";
+import { ENV } from "../config";
 
-const apiUrl = "http://localhost:8081/api";
+const apiUrl = ENV.API_URL;
 
 export interface SettingsDataProvider extends DataProvider {
   getTreeCategories: <T = MenuItems>(resource: string) => Promise<{ data: T }>;

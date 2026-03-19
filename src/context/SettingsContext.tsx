@@ -10,14 +10,15 @@ import {
 import {
   SettingsManager,
   SettingsData,
-} from "../pages/dashboard/manager/SettingsManager";
+} from "../services/SettingsManager";
 import { SettingsDataProvider } from "../providers/settingsDataProvider.ts";
+import type { MenuItems } from "../types/treeCategories";
 
 interface SettingsContextType {
   settings: SettingsData | null;
   setSettings: (settings: SettingsData | null) => void;
   reloadSettings: () => Promise<void>;
-  updateSettings: (newSettings: Partial<SettingsData>) => Promise<void>;
+  updateSettings: (newSettings: { data: MenuItems }) => Promise<void>;
   error: Error | null;
   loading: boolean;
   setError: (error: Error | null) => void;
@@ -36,30 +37,14 @@ export const SettingsProvider = ({
 }) => {
   const [settings, setSettings] = useState<SettingsData | null>(null);
   const [error, setError] = useState<Error | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     const manager = SettingsManager.getInstance().setDataProvider(dataProvider);
 
-    console.log("Initializing settings with dataProvider:");
-    setLoading(true);
-    manager
-      .loadSettings()
-      .then(() => {
-        setLoading(false);
-        //console.log("Settings initialized:", data);
-        //setSettings(manager.getSettings() as SettingsData);
-      })
-      .catch((err) => {
-        setError(
-          err instanceof Error
-            ? err
-            : new Error("Failed to initialize settings"),
-        );
-      });
-
     const unsubscribe = manager.subscribe((settings) => {
       setSettings(settings);
+      setLoading(false);
     });
     return () => {
       unsubscribe();
@@ -81,7 +66,7 @@ export const SettingsProvider = ({
   }, [dataProvider]);
 
   const updateSettings = useCallback(
-    async (newSettings: Partial<SettingsData>) => {
+    async (newSettings: { data: MenuItems }) => {
       const manager =
         SettingsManager.getInstance().setDataProvider(dataProvider);
       try {
